@@ -190,10 +190,7 @@ namespace PCRandKeys
                     new PcrSelection(TpmAlgId.Sha1, new uint[] {1, 2})
                 };
 
-            PcrSelection[] valsRead;
-            Tpm2bDigest[] values;
-
-            tpm.PcrRead(valuesToRead, out valsRead, out values);
+            tpm.PcrRead(valuesToRead, out PcrSelection[] valsRead, out Tpm2bDigest[] values);
 
             //
             // Check that what we read is what we asked for (the TPM does not 

@@ -31,7 +31,7 @@ namespace PCRandKeys
         private const string DeviceSys = "-sys";
 
         /// <summary> The default connection to use for communication with the TPM </summary>
-        private const string DefaultDevice = DeviceSim;
+        private const string DefaultDevice = DeviceWinTbs;
 
         /// <summary> When using a TCP connection, use the locally running simulator by default </summary>
         private const string DefaultSimulatorName = "127.0.0.1";
@@ -152,18 +152,21 @@ namespace PCRandKeys
                 }
 
                 Pcrs(tpm);
-                QuotePcrs(tpm);
-                StorageRootKey(tpm);
-                //
-                // Need a synchronization event to avoid disposing TPM object before
-                // asynchronous method completed.
-                // 
-                var sync = new AutoResetEvent(false);
-                Console.WriteLine("Calling asynchronous method.");
-                PrimarySigningKeyAsync(tpm, sync);
+                //QuotePcrs(tpm);
 
-                Console.WriteLine("Waiting for asynchronous method to complete.");
-                sync.WaitOne();
+                {
+                    //StorageRootKey(tpm);
+                    ////
+                    //// Need a synchronization event to avoid disposing TPM object before
+                    //// asynchronous method completed.
+                    //// 
+                    //var sync = new AutoResetEvent(false);
+                    //Console.WriteLine("Calling asynchronous method.");
+                    //PrimarySigningKeyAsync(tpm, sync);
+
+                    //Console.WriteLine("Waiting for asynchronous method to complete.");
+                    //sync.WaitOne();
+                }
 
                 //
                 // Clean up.

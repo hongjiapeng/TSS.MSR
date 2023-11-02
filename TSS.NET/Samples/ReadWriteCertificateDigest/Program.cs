@@ -39,7 +39,98 @@ using Tpm2Lib;
 
     ReadCertDigest(tpm, tpmAlgId, size);
 
+
+    PcrTest(tpm);
+
     Console.ReadLine();
+}
+
+void PcrTest(Tpm2 tpm)
+{
+    Console.WriteLine("\nPCR sample started.");
+
+    //
+    // Read the value of the SHA1 PCR 1 and 2
+    // 
+    var valuesToRead = new PcrSelection[]
+        {
+                    new PcrSelection(TpmAlgId.Sha1, new uint[] {1, 2})
+        };
+
+    tpm.PcrRead(valuesToRead, out PcrSelection[] valsRead, out Tpm2bDigest[] values);
+
+    //
+    // Check that what we read is what we asked for (the TPM does not 
+    // guarantee this)
+    // 
+    if (valsRead[0] != valuesToRead[0])
+    {
+        Console.WriteLine("Unexpected PCR-set");
+    }
+
+    //
+    // Print out PCR-1
+    // 
+    var pcr1 = new TpmHash(TpmAlgId.Sha1, values[0].buffer);
+    Console.WriteLine("PCR1: " + pcr1);
+
+    //
+    // Extend (event) PCR[1] in the TPM and in the external library and
+    // see if they match
+    //
+    var dataToExtend = new byte[] { 0, 1, 2, 3, 4 };
+
+    //
+    // Note that most PCR must be authorized with "null" authorization
+    // 
+    tpm.PcrEvent(TpmHandle.Pcr(1), dataToExtend);
+
+    //
+    // And read the current value
+    // 
+    tpm.PcrRead(valuesToRead, out valsRead, out values);
+
+    //
+    // Update the "simulated" PCR
+    // 
+    pcr1.Event(dataToExtend);
+
+    //
+    // And see whether the PCR has the value we expect
+    // 
+    if (pcr1 != values[0].buffer)
+    {
+        throw new Exception("Event did not work");
+    }
+
+    //
+    // Update a resettable PCR
+    // 
+    tpm.PcrEvent(TpmHandle.Pcr(16), new byte[] { 1, 2 });
+
+    //
+    // And reset it
+    // 
+    tpm.PcrReset(TpmHandle.Pcr(16));
+
+    //
+    // And check that it is indeed zero
+    // 
+    tpm.PcrRead(new PcrSelection[] {
+                            new PcrSelection(TpmAlgId.Sha1, new uint[] {16})
+                        },
+                out valsRead,
+                out values);
+
+    //
+    // Did it reset?
+    // 
+    if (TpmHash.ZeroHash(TpmAlgId.Sha1) != values[0].buffer)
+    {
+        throw new Exception("PCR did not reset");
+    }
+
+    Console.WriteLine("PCR sample finished.");
 }
 
 
